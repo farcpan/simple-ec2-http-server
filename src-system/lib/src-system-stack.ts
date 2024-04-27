@@ -97,7 +97,7 @@ export class SystemStack extends Stack {
     );
 
     // EC2(ASG)
-    const amiId = "ami-0addf8b394eea8913";
+    const amiId = "ami-0238382299c32c7a7";
     const autoscalingGroup = new AutoScalingGroup(this, "autoscalingGroup", {
       vpc: vpc,
       instanceType: InstanceType.of(InstanceClass.T2, InstanceSize.MICRO),

@@ -93,10 +93,26 @@ chmod 755 /home/ec2-user/app/start.sh
 cat << 'EOF' > /home/ec2-user/app/start.sh
 #!/bin/bash
 
-systemctl enable nginx
 systemctl restart nginx
 cd /home/ec2-user/app
 gunicorn app:app --daemon
 EOF
 
-source /home/ec2-user/app/start.sh
+# startup service
+touch /etc/systemd/system/my_startup_script.service
+chmod 644 /etc/systemd/system/my_startup_script.service
+cat << 'EOF' > /etc/systemd/system/my_startup_script.service
+[Unit]
+Description=My Startup Script
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/home/ec2-user/app/start.sh
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable my_startup_script.service

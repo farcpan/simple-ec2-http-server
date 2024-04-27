@@ -94,7 +94,7 @@ cat << 'EOF' > /home/ec2-user/app/start.sh
 #!/bin/bash
 
 systemctl enable nginx
-systemctl start nginx
+systemctl restart nginx
 cd /home/ec2-user/app
 gunicorn app:app --daemon
 EOF

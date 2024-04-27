@@ -12,7 +12,12 @@ import {
   Vpc,
 } from "aws-cdk-lib/aws-ec2";
 import { AutoScalingGroup } from "aws-cdk-lib/aws-autoscaling";
-import { ApplicationLoadBalancer } from "aws-cdk-lib/aws-elasticloadbalancingv2";
+import {
+  ApplicationLoadBalancer,
+  ApplicationTargetGroup,
+  ListenerAction,
+  ListenerCondition,
+} from "aws-cdk-lib/aws-elasticloadbalancingv2";
 import {
   Effect,
   ManagedPolicy,
@@ -22,6 +27,15 @@ import {
   ServicePrincipal,
 } from "aws-cdk-lib/aws-iam";
 import { Bucket } from "aws-cdk-lib/aws-s3";
+import {
+  Distribution,
+  HttpVersion,
+  OriginProtocolPolicy,
+  OriginRequestPolicy,
+  PriceClass,
+  ViewerProtocolPolicy,
+} from "aws-cdk-lib/aws-cloudfront";
+import { LoadBalancerV2Origin } from "aws-cdk-lib/aws-cloudfront-origins";
 
 interface SystemStackProps extends StackProps {}
 
@@ -67,11 +81,7 @@ export class SystemStack extends Stack {
     );
 
     const userData = UserData.forLinux();
-    userData.addCommands(
-      "service nginx restart",
-      "cd /home/ec2-user/app",
-      "gunicorn app:app --daemon" // バックグラウンド起動
-    );
+    userData.addCommands();
 
     // Role attached to EC2(ASG)
     const role = new Role(this, "roleForSSM", {
@@ -97,7 +107,7 @@ export class SystemStack extends Stack {
     );
 
     // EC2(ASG)
-    const amiId = "ami-082e9836f3e650ca0";
+    const amiId = "ami-0ebe609b6780483ac";
     const autoscalingGroup = new AutoScalingGroup(this, "autoscalingGroup", {
       vpc: vpc,
       instanceType: InstanceType.of(InstanceClass.T2, InstanceSize.MICRO),
@@ -115,20 +125,68 @@ export class SystemStack extends Stack {
     });
 
     // ALB
+    const targetGroup = new ApplicationTargetGroup(
+      this,
+      "target_group_of_alb",
+      {
+        port: 80,
+        vpc: vpc,
+        targets: [autoscalingGroup],
+      }
+    );
     const alb = new ApplicationLoadBalancer(this, "NewALB", {
       vpc,
       internetFacing: true,
       loadBalancerName: "test-alb-to-asg",
       securityGroup: albSecurityGroup,
     });
-    const listener = alb.addListener("Listener", { port: 80 });
+    const listener = alb.addListener("Listener", {
+      port: 80,
+      // デフォルトは403エラー
+      defaultAction: ListenerAction.fixedResponse(403, {
+        contentType: "text/plain",
+        messageBody: "Access Denied",
+      }),
+    });
+    listener.addAction("custom-header", {
+      priority: 1,
+      conditions: [
+        ListenerCondition.httpHeader("X-Custom-Header", ["Akl781A0cs2155p"]),
+      ],
+      action: ListenerAction.forward([targetGroup]),
+    });
 
     // ALB - AutoScalingGroup combined
+    /*
     listener.addTargets("Target", {
       targets: [autoscalingGroup],
       port: 80,
     });
+    */
 
+    ////////////////////////////////////////////////////////////////////////////////
+    // CloudFront
+    ////////////////////////////////////////////////////////////////////////////////
+    const distribution = new Distribution(this, "distribution", {
+      comment: "for I/F of ALB",
+      defaultBehavior: {
+        origin: new LoadBalancerV2Origin(alb, {
+          protocolPolicy: OriginProtocolPolicy.HTTP_ONLY, // ALB側はHTTP
+          customHeaders: {
+            "X-Custom-Header": "Akl781A0cs2155p",
+          },
+        }),
+        viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        // HOSTヘッダだけは転送しない
+        originRequestPolicy: OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
+      },
+      httpVersion: HttpVersion.HTTP2,
+      priceClass: PriceClass.PRICE_CLASS_200,
+    });
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // Outputs
+    ////////////////////////////////////////////////////////////////////////////////
     // ALB DNS name output
     new CfnOutput(this, "ALBDNS", { value: alb.loadBalancerDnsName });
   }

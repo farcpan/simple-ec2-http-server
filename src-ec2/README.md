@@ -9,6 +9,7 @@ userData.addCommands(
       "yum install -y python3-pip",
       "pip3 install flask",
       "pip3 install gunicorn",
+      "pip3 install boto3",
       "mkdir /home/ec2-user/app",
       "touch /home/ec2-user/app/app.py",
       "mkdir /home/ec2-user/logs"
@@ -47,21 +48,21 @@ if __name__ == '__main__':
 
 ```
 server {
-        listen       80;
-        listen       [::]:80;
-        server_name  _,;
-        root         /home/ec2-user/flask;
+    listen       80;
+    listen       [::]:80;
+    server_name  _,;
+    root         /home/ec2-user/app;
 
-        location / {
-                try_files $uri @flask;
-        }
+    location / {
+            try_files $uri @flask;
+    }
 
-        location @flask {
-                proxy_set_header Host $host;
-                proxy_set_header X-Real-IP $remote_addr;
-                proxy_redirect off;
-                proxy_pass http://127.0.0.1:8000; 
-	}
+    location @flask {
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_redirect off;
+            proxy_pass http://127.0.0.1:8000; 
+    }
 }
 ```
 

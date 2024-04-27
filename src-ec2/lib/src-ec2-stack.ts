@@ -1,10 +1,10 @@
 import { Stack, StackProps } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import {
+  Instance,
   InstanceType,
   InstanceClass,
   InstanceSize,
-  LaunchTemplate,
   MachineImage,
   Peer,
   Port,
@@ -12,7 +12,6 @@ import {
   UserData,
   Vpc,
 } from "aws-cdk-lib/aws-ec2";
-import { AutoScalingGroup } from "aws-cdk-lib/aws-autoscaling";
 import { ManagedPolicy, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
 
 interface Ec2StackProps extends StackProps {}
@@ -58,17 +57,14 @@ export class SrcEc2Stack extends Stack {
       ManagedPolicy.fromAwsManagedPolicyName("AmazonSSMManagedInstanceCore")
     );
 
-    const launchTemplate = new LaunchTemplate(this, "LaunchTemplate", {
+    // Creating EC2 instance
+    new Instance(this, "InstanceForAMICreation", {
       machineImage: ami,
       instanceType: instanceType,
       securityGroup: securityGroup,
       userData: userData,
       role: role,
-    });
-
-    const autoscalingGroup = new AutoScalingGroup(this, "autoscalingGroup", {
       vpc: defaultVpc,
-      launchTemplate: launchTemplate,
     });
   }
 }

@@ -68,7 +68,7 @@ export class SystemStack extends Stack {
 
     const userData = UserData.forLinux();
     userData.addCommands(
-      "sudo service nginx restart",
+      "service nginx restart",
       "cd /home/ec2-user/app",
       "gunicorn app:app --daemon" // バックグラウンド起動
     );

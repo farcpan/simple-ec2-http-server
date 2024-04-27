@@ -69,9 +69,16 @@ server {
 ### testing application boot
 
 ```
-$ sudo service nginx restart 
+$ service nginx restart 
 $ cd /home/ec2-user/app     
 $ gunicorn app:app
 ```
+
+---
+
+## 参考
+
+* [EC2のAmazon LinuxにNginxを入れてFlaskを動かす方法](https://zenn.dev/century/articles/6b7d6ad29605f8)
+* [AWS CDKでVPC、サブネット、EC2を作成してみる](https://dev.classmethod.jp/articles/aws-cdk-vpc-subnet-ec2/)
 
 ---

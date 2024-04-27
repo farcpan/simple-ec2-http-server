@@ -1,5 +1,6 @@
 import { Stack, StackProps } from "aws-cdk-lib";
 import { Construct } from "constructs";
+import { readFileSync } from "fs";
 import {
   Instance,
   InstanceType,
@@ -36,18 +37,8 @@ export class SrcEc2Stack extends Stack {
       "Added by a CDK stack"
     );
 
-    const userData = UserData.forLinux();
-    userData.addCommands(
-      "yum update -y",
-      "amazon-linux-extras install nginx1",
-      "yum install -y python3-pip",
-      "pip3 install flask",
-      "pip3 install gunicorn",
-      "pip3 install boto3",
-      "mkdir /home/ec2-user/app",
-      "touch /home/ec2-user/app/app.py",
-      "mkdir /home/ec2-user/logs"
-    );
+    // Linux用スクリプト
+    const scripts = readFileSync("./lib/resources/user-data.sh", "utf8");
 
     // for SessionManager
     const role = new Role(this, "roleForSSM", {
@@ -58,13 +49,13 @@ export class SrcEc2Stack extends Stack {
     );
 
     // Creating EC2 instance
-    new Instance(this, "InstanceForAMICreation", {
+    const ec2Instance = new Instance(this, "InstanceForAMICreation", {
       machineImage: ami,
       instanceType: instanceType,
       securityGroup: securityGroup,
-      userData: userData,
       role: role,
       vpc: defaultVpc,
     });
+    ec2Instance.addUserData(scripts);
   }
 }

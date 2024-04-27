@@ -2,19 +2,7 @@
 
 ## userData (initial command when EC2 booted)
 
-```typescript
-userData.addCommands(
-      "yum update -y",
-      "amazon-linux-extras install nginx1",
-      "yum install -y python3-pip",
-      "pip3 install flask",
-      "pip3 install gunicorn",
-      "pip3 install boto3",
-      "mkdir /home/ec2-user/app",
-      "touch /home/ec2-user/app/app.py",
-      "mkdir /home/ec2-user/logs"
-);
-```
+Defined in `lib/resources/user-data.sh`.
 
 ---
 
@@ -28,57 +16,12 @@ login by `ec2-user`.
 $ sudo su --login ec2-user
 ```
 
-### app.py
-
-```python
-from flask import Flask
-app = Flask(__name__)
-
-@app.route('/')
-def hello():
-    return 'Hello World!'
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
-```
-
-### nginx.conf
-
-`sudo vi /etc/nginx/nginx.conf`
-
-```
-server {
-    listen       80;
-    listen       [::]:80;
-    server_name  _,;
-    root         /home/ec2-user/app;
-
-    location / {
-            try_files $uri @flask;
-    }
-
-    location @flask {
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_redirect off;
-            proxy_pass http://127.0.0.1:8000; 
-    }
-}
-```
-
-### testing application boot
-
-```
-$ service nginx restart 
-$ cd /home/ec2-user/app     
-$ gunicorn app:app
-```
-
 ---
 
 ## 参考
 
 * [EC2のAmazon LinuxにNginxを入れてFlaskを動かす方法](https://zenn.dev/century/articles/6b7d6ad29605f8)
 * [AWS CDKでVPC、サブネット、EC2を作成してみる](https://dev.classmethod.jp/articles/aws-cdk-vpc-subnet-ec2/)
+* [Amazon Linux 2 が起動してネットワークが有効になった後で自作スクリプトを実行する方法を調べてみた](https://dev.classmethod.jp/articles/sugano-046-al2-systemd/)
 
 ---

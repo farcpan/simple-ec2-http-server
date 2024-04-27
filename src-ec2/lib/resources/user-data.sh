@@ -93,30 +93,9 @@ chmod 755 /home/ec2-user/app/start.sh
 cat << 'EOF' > /home/ec2-user/app/start.sh
 #!/bin/bash
 
-sudo service nginx restart
+systemctl enable nginx
 cd /home/ec2-user/app
 gunicorn app:app --daemon
 EOF
 
-# service
-touch /etc/systemd/system/bootapi.service
-chmod 644 /etc/systemd/system/bootapi.service
-cat << 'EOF' > /etc/systemd/system/bootapi.service
-[Unit]
-Description=exec by systemd
-After=network-online.target
-
-[Service]
-Restart=no
-Type=simple
-RemainAfterExit=yes
-ExecStart=/home/ec2-user/app/start.sh systemd start
-ExecStop=/home/ec2-user/app/start.sh systemd stop
-
-[Install]
-WantedBy=network-online.target
-EOF
-
-# register
-systemctl daemon-reload
-systemctl enable bootapi
+source /home/ec2-user/app/start.sh

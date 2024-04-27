@@ -40,16 +40,14 @@ export class SrcEc2Stack extends Stack {
     const userData = UserData.forLinux();
     userData.addCommands(
       "yum update -y",
-      // "yum install -y httpd.x86_64",
-      "sudo amazon-linux-extras install nginx1",
+      "amazon-linux-extras install nginx1",
       "yum install -y python3-pip",
       "pip3 install flask",
       "pip3 install gunicorn",
-      // "service httpd start",
+      "pip3 install boto3",
       "mkdir /home/ec2-user/app",
-      "touch /home/ec2-user/app.py",
+      "touch /home/ec2-user/app/app.py",
       "mkdir /home/ec2-user/logs"
-      // "echo “Hello World from $(hostname -f)” > /var/www/html/index.html"
     );
 
     // for SessionManager

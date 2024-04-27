@@ -93,7 +93,7 @@ chmod 755 /home/ec2-user/app/start.sh
 cat << 'EOF' > /home/ec2-user/app/start.sh
 #!/bin/bash
 
-service nginx restart
+sudo service nginx restart
 cd /home/ec2-user/app
 gunicorn app:app --daemon
 EOF

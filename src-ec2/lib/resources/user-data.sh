@@ -107,12 +107,16 @@ Description=My Startup Script
 After=network.target
 
 [Service]
-Type=oneshot
-ExecStart=/home/ec2-user/app/start.sh
+Restart=no
+Type=simple
+RemainAfterExit=yes
+ExecStart=/home/ec2-user/app/start.sh systemd start
+ExecStop=/home/ec2-user/app/start.sh systemd stop
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=network-online.target
 EOF
 
-sudo systemctl daemon-reload
-sudo systemctl enable my_startup_script.service
+systemctl daemon-reload
+systemctl enable my_startup_script
+systemctl start my_startup_script
